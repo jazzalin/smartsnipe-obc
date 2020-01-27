@@ -1,0 +1,4 @@
+uint8 door
+bool open
+---
+bool success
