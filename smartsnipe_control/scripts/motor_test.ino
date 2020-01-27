@@ -1,9 +1,10 @@
 /*
- * Motor controller test
- * Open/close door implemented as ROS service
+ * OBC Controller
+ * Update OBC on peripheral status and events
 */
 #include <ros.h>
-#include <smartsnipe_srvs/ActuateDoor.h>
+#include <smartsnipe_msgs/ActuateDoor.h>
+#include <smartsnipe_msgs/Shot.h>
 
 
 // Door motor encoders parameters
@@ -31,8 +32,12 @@
 #define D5_CLOSE 31
 
 ros::NodeHandle nh;
+// Services
 void doors_cb(const custom_srvs::ActuateDoor::Request & req, custom_srvs::ActuateDoor::Response & resp);
 ros::ServiceServer<std_srvs::SetBool::Request, std_srvs::SetBool::Response> doorServer("doors", &doors_cb);
+// Topics
+smartsnipe_msgs::Shot shot_msg;
+ros::Publisher shotUpdate("shot", &shot_msg);
 
 volatile long d1_count = 0, d2_count = 0, d3_count = 0, d4_count = 0, d5_count = 0;
 //float N = 823.1; // Gear box total pulse per revolution (PPR)
@@ -262,6 +267,7 @@ void setup()
   // ROS
   nh.initNode();
   nh.advertiseService(doorServer);
+  nh.advertise(shotUpdate);
 
   // Pins
   pinMode(ENC_D1_A, INPUT);
@@ -297,6 +303,11 @@ void setup()
 
 void loop()
 {
+  # example
+  shot_msg.header.stamp = nh.now();
+  shot_msg.door = 1;
+  shot_msg.speed = 100.0;
+
   nh.spinOnce();
-  delay(100);
+  delay(1000);
 }
