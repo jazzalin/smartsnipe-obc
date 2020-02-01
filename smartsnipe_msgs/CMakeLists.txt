@@ -33,6 +33,8 @@ add_service_files(
 add_message_files(
   FILES
   Shot.msg
+  DoorState.msg
+  BoardState.msg
 )
 
 generate_messages(

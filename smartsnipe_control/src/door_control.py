@@ -1,6 +1,6 @@
 import rospy
 from smartsnipe_msgs.srv import ActuateDoor, ActuateDoorRequest, ActuateDoorResponse
-from smartsnipe_msgs.msg import Shot
+from smartsnipe_msgs.msg import Shot, BoardState
 from std_msgs import UInt8
 
 class Door:
@@ -27,6 +27,7 @@ class DoorMonitor:
             if doors[index]:
                 self.doors.append(Door(index))
 
+        # Subscribers
         rospy.Subscriber('shot', Shot, self.shot_cb)
 
 
