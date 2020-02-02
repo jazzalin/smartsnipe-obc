@@ -48,7 +48,7 @@ class TxCharacteristic(Characteristic):
             return
         value = []
         #TODO: parse string from ROS msg and encode
-        for c in s:
+        for c in s.data:
             value.append(dbus.Byte(c.encode()))
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
  
@@ -70,6 +70,7 @@ class RxCharacteristic(Characteristic):
  
     def WriteValue(self, value, options):
         print('remote: {}'.format(bytearray(value).decode()))
+        self.pub.publish(bytearray(value).decode())
  
 class UartService(Service):
     def __init__(self, bus, index):
@@ -160,11 +161,10 @@ class UartHandler:
 
 
     def run(self):
-        while not rospy.is_shutdown():
-            try:
-                self.main_loop.run()
-            except KeyboardInterrupt:
-                self.adv.Release()
+        try:
+            self.main_loop.run()
+        except KeyboardInterrupt:
+            self.adv.Release()
         
 
 # def find_adapter(bus):
@@ -178,12 +178,5 @@ class UartHandler:
 #     return None
  
 if __name__ == '__main__':
-    try:
-        uart = UartHandler()
-        uart.run()
-    except rospy.ROSInterruptException:
-        print("Action client interrupted")
-    except KeyboardInterrupt:
-        # Release!
-        uart.adv.release()
-        exit()
+    uart = UartHandler()
+    uart.run()

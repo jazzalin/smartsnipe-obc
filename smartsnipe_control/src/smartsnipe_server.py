@@ -57,8 +57,10 @@ class BoardController:
         pass
 
 class SmartsnipeAction(object):
-    _feedback = SmartsnipeDrillFeedback()
-    _result = SmartsnipeDrillResult()
+    # _feedback = SmartsnipeDrillFeedback()
+    # _result = SmartsnipeDrillResult()
+    _feedback = actionlib_tutorials.msg.FibonacciFeedback()
+    _result = actionlib_tutorials.msg.FibonacciResult()
 
     def __init__(self, name):
         self._action_name = name

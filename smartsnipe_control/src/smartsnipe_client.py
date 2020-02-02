@@ -17,11 +17,11 @@ class SmartsnipeClient:
         self.rate = rospy.Rate(10)
 
     def process_goal(self, goal):
-        self.action.order = goal.data
-        self.client.send_goal(self.action, done_cb=action_complete)
+        self.action.order = int(goal.data)
+        self.client.send_goal(self.action, done_cb=self.action_complete)
     
     def action_complete(self, status, result):
-        rospy.loginfo(result.sequence)
+        rospy.loginfo("Result {}".format(result))
 
     def run(self):
         while not rospy.is_shutdown():
