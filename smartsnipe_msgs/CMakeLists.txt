@@ -10,6 +10,7 @@ project(smartsnipe_msgs)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  actionlib_msgs
   std_msgs
   std_srvs
   message_generation
@@ -37,8 +38,14 @@ add_message_files(
   BoardState.msg
 )
 
+add_action_files(
+  FILES
+  SmartsnipeDrill.action
+)
+
 generate_messages(
   DEPENDENCIES
+  actionlib_msgs
   std_msgs
 )
 
@@ -74,7 +81,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES smartsnipe_msgs
-  CATKIN_DEPENDS message_runtime
+  CATKIN_DEPENDS actionlib_msgs message_runtime
 #  DEPENDS system_lib
 )
 

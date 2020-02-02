@@ -1,15 +1,20 @@
+#! /usr/bin/env python
+
 # Based on bluez example-advertisement and example-gatt-server
 # Further information: https://scribles.net/creating-ble-gatt-server-uart-service-on-raspberry-pi/
 # Adapted to work with ROS 
 import sys
 import rospy
+import actionlib
+import actionlib_tutorials.msg
 import dbus, dbus.mainloop.glib
 from gi.repository import GLib
 from advertisement import Advertisement
 from advertisement import register_ad_cb, register_ad_error_cb
 from gatt_server import Service, Characteristic
 from gatt_server import register_app_cb, register_app_error_cb
-from smartsnipe_msgs import BoardState
+# from smartsnipe_msgs.msg import BoardState
+from std_msgs.msg import String
  
 BLUEZ_SERVICE_NAME =           'org.bluez'
 DBUS_OM_IFACE =                'org.freedesktop.DBus.ObjectManager'
@@ -27,20 +32,22 @@ class TxCharacteristic(Characteristic):
         Characteristic.__init__(self, bus, index, UART_TX_CHARACTERISTIC_UUID,
                                 ['notify'], service)
         self.notifying = False
-        GLib.io_add_watch(sys.stdin, GLib.IO_IN, self.on_console_input)
+        rospy.Subscriber('uart_tx', String, self.send_tx)
+        # GLib.io_add_watch(sys.stdin, GLib.IO_IN, self.on_console_input)
  
-    def on_console_input(self, fd, condition):
-        s = fd.readline()
-        if s.isspace():
-            pass
-        else:
-            self.send_tx(s)
-        return True
+    # def on_console_input(self, fd, condition):
+    #     s = fd.readline()
+    #     if s.isspace():
+    #         pass
+    #     else:
+    #         self.send_tx(s)
+    #     return True
  
     def send_tx(self, s):
         if not self.notifying:
             return
         value = []
+        #TODO: parse string from ROS msg and encode
         for c in s:
             value.append(dbus.Byte(c.encode()))
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
@@ -59,6 +66,7 @@ class RxCharacteristic(Characteristic):
     def __init__(self, bus, index, service):
         Characteristic.__init__(self, bus, index, UART_RX_CHARACTERISTIC_UUID,
                                 ['write'], service)
+        self.pub = rospy.Publisher('uart_rx', String, queue_size=100)
  
     def WriteValue(self, value, options):
         print('remote: {}'.format(bytearray(value).decode()))
@@ -134,6 +142,11 @@ class UartHandler:
         self.ad_manager.RegisterAdvertisement(self.adv.get_path(), {},
                                               reply_handler=register_ad_cb,
                                               error_handler=register_ad_error_cb)
+        
+        # ROS
+        rospy.init_node('mcihandler')
+        # rospy.Subscriber('board_state', BoardState, self.board_state_update)
+        # self.state_pub = rospy.Publisher('board_state', BoardState, queue_size=10)
     
     def find_adapter(self):
         remote_om = dbus.Interface(self.bus.get_object(BLUEZ_SERVICE_NAME, '/'),
@@ -147,10 +160,11 @@ class UartHandler:
 
 
     def run(self):
-        try:
-            self.main_loop.run()
-        except KeyboardInterrupt:
-            self.adv.Release()
+        while not rospy.is_shutdown():
+            try:
+                self.main_loop.run()
+            except KeyboardInterrupt:
+                self.adv.Release()
         
 
 # def find_adapter(bus):
@@ -164,5 +178,12 @@ class UartHandler:
 #     return None
  
 if __name__ == '__main__':
-    uart = UartHandler()
-    uart.run()
+    try:
+        uart = UartHandler()
+        uart.run()
+    except rospy.ROSInterruptException:
+        print("Action client interrupted")
+    except KeyboardInterrupt:
+        # Release!
+        uart.adv.release()
+        exit()

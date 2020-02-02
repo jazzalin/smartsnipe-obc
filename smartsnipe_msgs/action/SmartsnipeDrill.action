@@ -1,0 +1,10 @@
+#goal definition
+# TODO: replace boardstate with Drill custom msg
+BoardState drill
+---
+#result definition
+# DrillStats stats
+BoardState final_state
+---
+#feedback
+BoardState current_state
