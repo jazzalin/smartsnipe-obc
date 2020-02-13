@@ -1,0 +1,4 @@
+Float32 time_between
+Float32 time_open
+UInt8MultiArray slots
+Float32 duration

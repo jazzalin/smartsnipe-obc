@@ -1,10 +1,11 @@
 #goal definition
 # TODO: replace boardstate with Drill custom msg
-BoardState drill
+Session drill
 ---
 #result definition
 # DrillStats stats
-BoardState final_state
+Statistics final_state
 ---
 #feedback
-BoardState current_state
+#TODO: find something useful to return as feedback, status of board?
+Statistics current_state

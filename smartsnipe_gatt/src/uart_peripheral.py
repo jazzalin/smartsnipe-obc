@@ -15,6 +15,7 @@ from gatt_server import Service, Characteristic
 from gatt_server import register_app_cb, register_app_error_cb
 # from smartsnipe_msgs.msg import BoardState
 from std_msgs.msg import String
+import json
  
 BLUEZ_SERVICE_NAME =           'org.bluez'
 DBUS_OM_IFACE =                'org.freedesktop.DBus.ObjectManager'
@@ -33,22 +34,19 @@ class TxCharacteristic(Characteristic):
                                 ['notify'], service)
         self.notifying = False
         rospy.Subscriber('uart_tx', String, self.send_tx)
-        # GLib.io_add_watch(sys.stdin, GLib.IO_IN, self.on_console_input)
- 
-    # def on_console_input(self, fd, condition):
-    #     s = fd.readline()
-    #     if s.isspace():
-    #         pass
-    #     else:
-    #         self.send_tx(s)
-    #     return True
  
     def send_tx(self, s):
+        """
+        Parse stringified json to send to BLE central device
+        """
         if not self.notifying:
             return
         value = []
-        #TODO: parse string from ROS msg and encode
-        for c in s.data:
+        # payload = {}
+        # payload["data"] = s.data
+        # test = json.dumps(payload)
+        test = s.data
+        for c in test:
             value.append(dbus.Byte(c.encode()))
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
  
@@ -69,7 +67,7 @@ class RxCharacteristic(Characteristic):
         self.pub = rospy.Publisher('uart_rx', String, queue_size=100)
  
     def WriteValue(self, value, options):
-        print('remote: {}'.format(bytearray(value).decode()))
+        rospy.loginfo('remote: {}'.format(bytearray(value).decode()))
         self.pub.publish(bytearray(value).decode())
  
 class UartService(Service):

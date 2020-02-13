@@ -36,6 +36,8 @@ add_message_files(
   Shot.msg
   DoorState.msg
   BoardState.msg
+  Session.msg
+  Statistics.msg
 )
 
 add_action_files(
