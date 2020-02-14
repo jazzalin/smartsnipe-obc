@@ -35,8 +35,6 @@ class Session:
         # Params
         self.time_between = 0.0
         self.time_open = 0.0
-        # self.num_slots = 0
-        # self.slot = -1
         self.slots = [0, 0, 0, 0, 0] # default: all closed
         self.duration = 0.0
         self.start = 0.0

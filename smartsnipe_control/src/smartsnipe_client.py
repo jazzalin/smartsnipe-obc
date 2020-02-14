@@ -5,6 +5,7 @@ import actionlib_msgs
 import actionlib_tutorials.msg
 from actionlib_msgs.msg import GoalStatus
 from std_msgs.msg import String
+from smartsnipe_msgs.msg import SmartsnipeDrillAction, SmartsnipeDrillGoal
 from smartsnipe_session import Session, SessionStatistics
 import json
 #TODO: add cloud DB storage client interface
@@ -13,11 +14,12 @@ class SmartsnipeClient:
 
     def __init__(self):
         # ROS
-        self.client = actionlib.SimpleActionClient('smartsnipe_action', actionlib_tutorials.msg.FibonacciAction)
+        # self.client = actionlib.SimpleActionClient('smartsnipe_action', actionlib_tutorials.msg.FibonacciAction)
+        self.client = actionlib.SimpleActionClient('smartsnipe_action', SmartsnipeDrillAction)
         self.client.wait_for_server()
         rospy.Subscriber('uart_rx', String, self.process_rx)
         self.pub = rospy.Publisher('uart_tx', String, queue_size=100)
-        self.action = actionlib_tutorials.msg.FibonacciGoal()
+        self.action = SmartsnipeDrillGoal()
         self.rate = rospy.Rate(10)
 
         # Session
@@ -72,7 +74,11 @@ class SmartsnipeClient:
             if self.session.in_progress:
                 if not self.session.requested:
                     # Request new drill
-                    # self.action.order = int(goal.data)
+                    # Example drill
+                    self.action.time_between = 0.5
+                    self.action.time_open = 1.0
+                    self.action.slots = [1, 1, 1, 1, 1]
+                    self.action.duration = 180.0
                     self.client.send_goal(self.action,
                                         active_cb=self.drill_in_progress_cb,
                                         done_cb=self.drill_results_cb, 
