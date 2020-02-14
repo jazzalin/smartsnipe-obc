@@ -1,4 +1,5 @@
 # Smartsnipe session classes to keep track of drills and shot statistics
+import rospy
 class SessionStatistics:
     """
     Record of the session statistics
@@ -48,15 +49,16 @@ class Session:
             self.start = rospy.Time.now()
         else:
             self.end = rospy.Time.now()
-        self.in_progress = change
+        self.in_progress = is_live
         #(Re)set the session statistics
-        # self.stats = SessionStatistics()
+        self.stats = SessionStatistics()
     
     def set_params(self, data):
         self.time_between = data["time_between_openings"]
         self.time_open = data["time_slot_is_open"]
         self.slots = data["slots"]
-        self.mode = data["current_mode"]
+        # self.mode = data["current_mode"]
+        self.requested = True
     
     def set_override(self, data):
         """

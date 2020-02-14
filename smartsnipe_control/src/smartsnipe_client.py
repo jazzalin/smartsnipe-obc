@@ -39,9 +39,13 @@ class SmartsnipeClient:
             self.session.set_status(data["session_in_progress"])
             resp["success"] = True
         elif "time_between_openings" in data.keys():
-            rospy.loginfo("CONFIG: configuring session")
-            self.session.set_params(data)
-            resp["success"] = True
+            if not self.session.in_progress:
+                resp["error"] = "Inconsistent state: session not in progress"
+                resp["success"] = False
+            else:
+                rospy.loginfo("CONFIG: configuring session")
+                self.session.set_params(data)
+                resp["success"] = True
         elif "slot_to_open_next" in data.keys():
             rospy.loginfo("OVERRIDE: setting session in override")
             self.session.set_override(data)
@@ -61,32 +65,39 @@ class SmartsnipeClient:
         rospy.loginfo(feedback.data)
     
     def drill_results_cb(self, status, result):
-        rospy.logdebug("Drill results received with status {}".format(status))
-        # rospy.loginfo("Result {}".format(result))
+        rospy.logdebug("Drill results received with status {}; msg: {}".format(status, result))
+        msg = ""
         if status == GoalStatus.SUCCEEDED:
-            self.session.set_statistics(results)
+            self.session.set_statistics(result.final_state)
+        # elif status == GoalStatus.ABORTED:
+            # rospy.logdebug("ABORTED")
+            
         # NOTE: the __repr__ is used to support intermediate stats
         data = self.session.stats.__repr__()
+        data["status"] = result.final_state.status
         self.pub.publish(json.dumps(data))
 
     def run(self):
         while not rospy.is_shutdown():
             if self.session.in_progress:
-                if not self.session.requested:
+                rospy.loginfo("Session in progress")
+                if self.session.requested:
+                    rospy.loginfo("Requesting new board configuration")
                     # Request new drill
                     # Example drill
-                    self.action.time_between = 0.5
-                    self.action.time_open = 1.0
-                    self.action.slots = [1, 1, 1, 1, 1]
-                    self.action.duration = 180.0
+                    self.action.drill.time_between = 0.5
+                    self.action.drill.time_open = 1.0
+                    self.action.drill.slots = [1, 1, 1, 1, 1]
+                    self.action.drill.duration = 180.0
                     self.client.send_goal(self.action,
-                                        active_cb=self.drill_in_progress_cb,
-                                        done_cb=self.drill_results_cb, 
-                                        feedback_cb=self.drill_feedback_cb)
-                    self.session.requested = True
+                                          active_cb=self.drill_in_progress_cb,
+                                          done_cb=self.drill_results_cb, 
+                                          feedback_cb=self.drill_feedback_cb)
+                    self.session.requested = False
                 else:
-                    rospy.logdebug("Session is in progress")
-
+                    rospy.logdebug("Session not configured yet")
+            else:
+                rospy.logdebug("Session not in progress")
             self.rate.sleep()
 
 

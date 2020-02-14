@@ -46,14 +46,20 @@ class BoardMonitor:
         """
         Blocking call to open/close doors
         """
-        rospy.wait_for_service('doors')
+        success = True
         try:
+            rospy.wait_for_service('doors', timeout=5.0)
             actuator = rospy.ServiceProxy('doors', ActuateDoor)
             req = ActuateDoorRequest(doors=self.doors)
             resp = actuator(req)
             rospy.loginfo(resp.message)
         except rospy.ServiceException as e:
-            print("Call to ActuateDoor service failed: %s", e)
+            rospy.logerr("Call to ActuateDoor service failed: %s", e)
+            success = False
+        except rospy.ROSException as e:
+            rospy.logerr("Call to ActuateDoor service timed out")
+            success = False
+        return success
 
 
     def shot_stats_cb(self, data):
@@ -96,45 +102,50 @@ class SmartsnipeAction(object):
         success = True
         self.board.reset_state()
 
-        rospy.loginfo("{}: Starting requested drill".format(self._action_name))
+        rospy.loginfo("{}: Received new drill".format(self._action_name))
         
         # TODO: -call door service to apply request board configuration
         #       -if duration is specified, enter time loop | catch any preemption (and return existing stats) |
         #        use feedback to update stats | use return to give final stats
         #       -if duration is not specified, catch any preemption (necessary???) | return current stats
 
-        self.board.set_doors(goal.slots)
-        self.board.actuate_door()
-
-        start = rospy.Time.now()
-        if goal.duration > 0.0:
-            while rospy.Time.now() - start < goal.duration:
-                if self._as.is_preempt_requested():  # handle preemption request;
-                    rospy.loginfo("Current drill preempted. Ending current drill")
-                    success = False
-                    self._as.set_preempted()
-                    break
-                # TODO: periodically send statistics (internally kept up2d8) according to rospy.Rate specified
-                self._feedback.status = "Useful feedback"
-                self._as.publish_feedback(self._feedback)
-                r.sleep()
+        self.board.set_doors(goal.drill.slots)
+        ready = self.board.actuate_door()
+        if not ready:
+            self._result.final_state.status = "FAILED: Could not actuate doors"
+            self._as.set_aborted(self._result)
         else:
-            while not self.stats_change() and (rospy.Time.now() - start) < self.timeout:
-                if self._as.is_preempt_requested():  # handle preemption request;
-                    rospy.loginfo("Current drill preempted. Ending current drill")
-                    success = False
-                    self._as.set_preempted()
-                    break
-                self._feedback.status = "Waiting for shot to be taken..."
-                self._as.publish_feedback(self._feedback)
-                r.sleep()   
-        
-        self.prev_state = self.shot_count
-        # Return results if drill completed successfully    
-        if success:
-            self._result.status = "Useful results"
-            rospy.loginfo('%s: Succeeded' % self._action_name)
-            self._as.set_succeeded(self._result)
+            start = rospy.Time.now()
+            if goal.drill.duration > 0.0:
+                rospy.logdebug("Starting requested {} second drill".format(goal.drill.duration))
+                while rospy.Time.now() - start < goal.drill.duration:
+                    if self._as.is_preempt_requested():  # handle preemption request;
+                        rospy.loginfo("Current drill preempted. Ending current drill")
+                        success = False
+                        self._as.set_preempted()
+                        break
+                    # TODO: periodically send statistics (internally kept up2d8) according to rospy.Rate specified
+                    self._feedback.current_state.status = "Useful feedback"
+                    self._as.publish_feedback(self._feedback)
+                    r.sleep()
+            else:
+                rospy.logdebug("Starting requested drill")
+                while not self.stats_change() and (rospy.Time.now() - start) < self.timeout:
+                    if self._as.is_preempt_requested():  # handle preemption request;
+                        rospy.loginfo("Current drill preempted. Ending current drill")
+                        success = False
+                        self._as.set_preempted()
+                        break
+                    self._feedback.current_state.status = "Waiting for shot to be taken..."
+                    self._as.publish_feedback(self._feedback)
+                    r.sleep()   
+            
+            self.prev_state = self.shot_count
+            # Return results if drill completed successfully    
+            if success:
+                self._result.final_state.status = "Useful results"
+                rospy.loginfo('%s: Succeeded' % self._action_name)
+                self._as.set_succeeded(self._result)
 
 
 if __name__ == "__main__":
