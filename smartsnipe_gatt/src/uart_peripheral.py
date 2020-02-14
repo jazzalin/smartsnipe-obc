@@ -42,9 +42,6 @@ class TxCharacteristic(Characteristic):
         if not self.notifying:
             return
         value = []
-        # payload = {}
-        # payload["data"] = s.data
-        # test = json.dumps(payload)
         test = s.data
         for c in test:
             value.append(dbus.Byte(c.encode()))
@@ -110,71 +107,47 @@ class UartAdvertisement(Advertisement):
         self.add_local_name(LOCAL_NAME)
         self.include_tx_power = True
 
-class UartHandler:
-    
-    def __init__(self):
-        global mainloop
-        self.main_loop = mainloop
-        # Initialize dbus bluetooth interface
-        dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-        self.bus = dbus.SystemBus()
-        self.adapter = self.find_adapter()
-        if not self.adapter:
-            rospy.loginfo("BLE adapter not found. Exit initialization...")
-            return
+def find_adapter(bus):
+    remote_om = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, '/'),
+                               DBUS_OM_IFACE)
+    objects = remote_om.GetManagedObjects()
+    for o, props in objects.items():
+        if LE_ADVERTISING_MANAGER_IFACE in props and GATT_MANAGER_IFACE in props:
+            return o
+        print('Skip adapter:', o)
+    return None
 
-        self.service_manager = dbus.Interface(
-                                self.bus.get_object(BLUEZ_SERVICE_NAME, self.adapter),
-                                GATT_MANAGER_IFACE)
-        self.ad_manager = dbus.Interface(self.bus.get_object(BLUEZ_SERVICE_NAME, self.adapter),
-                                    LE_ADVERTISING_MANAGER_IFACE)
+def uart_handler():
+    global mainloop
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+    bus = dbus.SystemBus()
+    adapter = find_adapter(bus)
+    if not adapter:
+        print('BLE adapter not found')
+        return
  
-        self.app = UartApplication(self.bus)
-        self.adv = UartAdvertisement(self.bus, 0)
-    
-        self.main_loop = GLib.MainLoop()
-
-        # Register service and advertisement
-        self.service_manager.RegisterApplication(self.app.get_path(), {},
-                                                 reply_handler=register_app_cb,
-                                                 error_handler=register_app_error_cb)
-        self.ad_manager.RegisterAdvertisement(self.adv.get_path(), {},
-                                              reply_handler=register_ad_cb,
-                                              error_handler=register_ad_error_cb)
-        
-        # ROS
-        rospy.init_node('mcihandler')
-        # rospy.Subscriber('board_state', BoardState, self.board_state_update)
-        # self.state_pub = rospy.Publisher('board_state', BoardState, queue_size=10)
-    
-    def find_adapter(self):
-        remote_om = dbus.Interface(self.bus.get_object(BLUEZ_SERVICE_NAME, '/'),
-                                   DBUS_OM_IFACE)
-        objects = remote_om.GetManagedObjects()
-        for o, props in objects.items():
-            if LE_ADVERTISING_MANAGER_IFACE in props and GATT_MANAGER_IFACE in props:
-                return o
-            rospy.loginfo(('Skip adapter:', o))
-        return None
-
-
-    def run(self):
-        try:
-            self.main_loop.run()
-        except KeyboardInterrupt:
-            self.adv.Release()
-        
-
-# def find_adapter(bus):
-#     remote_om = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, '/'),
-#                                DBUS_OM_IFACE)
-#     objects = remote_om.GetManagedObjects()
-#     for o, props in objects.items():
-#         if LE_ADVERTISING_MANAGER_IFACE in props and GATT_MANAGER_IFACE in props:
-#             return o
-#         print('Skip adapter:', o)
-#     return None
+    service_manager = dbus.Interface(
+                                bus.get_object(BLUEZ_SERVICE_NAME, adapter),
+                                GATT_MANAGER_IFACE)
+    ad_manager = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, adapter),
+                                LE_ADVERTISING_MANAGER_IFACE)
+ 
+    app = UartApplication(bus)
+    adv = UartAdvertisement(bus, 0)
+ 
+    mainloop = GLib.MainLoop()
+ 
+    service_manager.RegisterApplication(app.get_path(), {},
+                                        reply_handler=register_app_cb,
+                                        error_handler=register_app_error_cb)
+    ad_manager.RegisterAdvertisement(adv.get_path(), {},
+                                     reply_handler=register_ad_cb,
+                                     error_handler=register_ad_error_cb)
+    try:
+        mainloop.run()
+    except KeyboardInterrupt:
+        adv.Release()
  
 if __name__ == '__main__':
-    uart = UartHandler()
-    uart.run()
+    rospy.init_node('mcihandler', log_level=rospy.DEBUG)
+    uart_handler()
