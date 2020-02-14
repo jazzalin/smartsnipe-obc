@@ -1,0 +1,9 @@
+<launch>
+    <arg name="port" default="/dev/arduino" />
+    <node name="smartsnipe_client" pkg="smartsnipe_control" type="smartsnipe_client.py" output="screen" />
+    <node name="smartsnipe_server" pkg="smartsnipe_control" type="smartsnipe_server.py" output="screen" />
+    <node name="uart_handler" pkg="smartsnipe_gatt" type="uart_peripheral.py" output="screen" />
+    <node name="serial_node" pkg="rosserial_arduino" type="serial_node.py">
+        <param name="port" value="$(arg port)" />
+    </node>
+</launch>

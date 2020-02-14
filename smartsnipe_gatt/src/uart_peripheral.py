@@ -149,5 +149,5 @@ def uart_handler():
         adv.Release()
  
 if __name__ == '__main__':
-    rospy.init_node('mcihandler', log_level=rospy.DEBUG)
+    rospy.init_node('uart_handler', log_level=rospy.DEBUG)
     uart_handler()

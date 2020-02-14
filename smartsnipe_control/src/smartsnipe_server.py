@@ -66,11 +66,12 @@ class BoardMonitor:
         """
         Update internal state of targets for analytics
         """
-        self.shot_count += 1
-        if data.goal:
-            self.doors[data.door].increment_count()
-        else:
-            self.shot_missed += 1
+        rospy.logdebug("shot stat received")
+        # self.shot_count += 1
+        # if data.goal:
+        #     self.doors[data.door].increment_count()
+        # else:
+        #     self.shot_missed += 1
 
 
 class SmartsnipeAction(object):
