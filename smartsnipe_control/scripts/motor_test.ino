@@ -20,155 +20,53 @@
 #define ENC_D5_B 7
 
 // Door pins
-#define D1_OPEN 22
-#define D1_CLOSE 23
-#define D2_OPEN 24
-#define D2_CLOSE 25
-#define D3_OPEN 26
-#define D3_CLOSE 27
-#define D4_OPEN 28
-#define D4_CLOSE 29
-#define D5_OPEN 30
-#define D5_CLOSE 31
+int door_open[] = {22, 24, 26, 28, 30};
+int door_close[] = {23, 25, 27, 29, 31};
 
 ros::NodeHandle nh;
 // Services
-void doors_cb(const custom_srvs::ActuateDoor::Request & req, custom_srvs::ActuateDoor::Response & resp);
-ros::ServiceServer<std_srvs::SetBool::Request, std_srvs::SetBool::Response> doorServer("doors", &doors_cb);
+void doors_cb(const smartsnipe_msgs::ActuateDoor::Request & req, smartsnipe_msgs::ActuateDoor::Response & resp);
+ros::ServiceServer<smartsnipe_msgs::ActuateDoor::Request, smartsnipe_msgs::ActuateDoor::Response> doorServer("doors", &doors_cb);
 // Topics
 smartsnipe_msgs::Shot shot_msg;
-ros::Publisher shotUpdate("shot", &shot_msg);
+ros::Publisher shotPub("shot_stats", &shot_msg);
 
-volatile long d1_count = 0, d2_count = 0, d3_count = 0, d4_count = 0, d5_count = 0;
+volatile long door_count[5] = {0, 0, 0, 0, 0};
+bool state[] = {0, 0, 0, 0, 0}; // by default, all doors start closed
 //float N = 823.1; // Gear box total pulse per revolution (PPR)
 int N = 800;
 
-void doors_cb(const custom_srvs::ActuateDoor::Request & req, custom_srvs::ActuateDoor::Response & resp)
+void doors_cb(const smartsnipe_msgs::ActuateDoor::Request & req, smartsnipe_msgs::ActuateDoor::Response & resp)
 {
-  switch(req.door)
+  for (int i = 0; i < 5; i++)
   {
-    case 1:
-      door1(req.open);
-      resp.success = true;
-      break;
-    case 2:
-      door2(req.open);
-      resp.success = true;
-      break;
-    case 3:
-      door3(req.open);
-      resp.success = true;
-      break;
-    case 4:
-      door4(req.open);
-      resp.success = true;
-      break;
-    case 5:
-      door5(req.open);
-      resp.success = true;
-      break;
-    default:
-      resp.message = "Invalid door number specified!"
-      resp.success = false;
-      break;
+    // Check if door is already in desired state
+    if(req.doors[i] != state[i])
+    {
+      door_control(req.doors[i],i);
+    }
+    resp.success = true;
+    resp.message = "Door actuated";
   }
 }
 
-void door1(bool open, )
+void door_control(bool open, int i)
 {
   long start = 0;
+  start = door_count[i];
   // Open door
   if (open)
   {
-    start = d1_count;
-    digitalWrite(D1_OPEN, HIGH);
-    while(abs(d1_count - start) < N) {};
-    digitalWrite(D1_OPEN, LOW);
-    // res.message = "Door 1 closed!";
+    digitalWrite(door_open[i], HIGH);
+    // while(abs(door_count[i] - start) < N) {};
+    digitalWrite(door_open[i], LOW);
   } else // close door
   {
-    start = d1_count;
-    digitalWrite(D1_CLOSE, HIGH);
-    while(abs(d1_count - start) < N) {};
-    digitalWrite(D1_CLOSE, LOW);
-    // res.message = "Door 1 open";
+    digitalWrite(door_close[i], HIGH);
+    // while(abs(door_count[i] - start) < N) {};
+    digitalWrite(door_close[i], LOW);
   }
-}
-
-void door2(bool open)
-{
-  long start = 0;
-  // Open door
-  if (open)
-  {
-    start = d2_count;
-    digitalWrite(D2_OPEN, LOW);
-    while(abs(d2_count - start) < N) {};
-    // res.message = "Door 2 closed!";
-  } else // close door
-  {
-    start = d2_count;
-    digitalWrite(D2_CLOSE, LOW);
-    while(abs(d2_count - start) < N) {};
-    // res.message = "Door 2 open";
-  }
-}
-
-void door3(bool open)
-{
-  long start = 0;
-  // Open door
-  if (open)
-  {
-    start = d3_count;
-    digitalWrite(D3_OPEN, LOW);
-    while(abs(d3_count - start) < N) {};
-    // res.message = "Door 3 closed!";
-  } else // close door
-  {
-    start = d3_count;
-    digitalWrite(D3_CLOSE, LOW);
-    while(abs(d3_count - start) < N) {};
-    // res.message = "Door 3 open";
-  }
-}
-
-void door4(bool open)
-{
-  long start = 0;
-  // Open door
-  if (open)
-  {
-    start = d4_count;
-    digitalWrite(D4_OPEN, LOW);
-    while(abs(d4_count - start) < N) {};
-    // res.message = "Door 4 closed!";
-  } else // close door
-  {
-    start = d4_count;
-    digitalWrite(D4_CLOSE, LOW);
-    while(abs(d4_count - start) < N) {};
-    // res.message = "Door 4 open";
-  }
-}
-
-void door5(bool open)
-{
-  long start = 0;
-  // Open door
-  if (open)
-  {
-    start = d5_count;
-    digitalWrite(D5_OPEN, LOW);
-    while(abs(d5_count - start) < N) {};
-    // res.message = "Door 5 closed!";
-  } else // close door
-  {
-    start = d5_count;
-    digitalWrite(D5_CLOSE, LOW);
-    while(abs(d5_count - start) < N) {};
-    // res.message = "Door 5 open";
-  }
+  state[i] = !state[i];
 }
 
 void d1encoderEvent2x()
@@ -176,18 +74,18 @@ void d1encoderEvent2x()
   if (digitalRead(ENC_D1_B) == 0) {
     if (digitalRead(ENC_D1_A) == 0) {
       // A fell, B is LOW
-      d1_count--; // Moving reverse
+      door_count[0]--; // Moving reverse
     } else {
       // A rose, B is LOW
-      d1_count++; // Moving reverse
+      door_count[0]++; // Moving reverse
     }
   } else {
     if (digitalRead(ENC_D1_A) == 0) {
       // A fell, B is HIGH
-      d1_count++; // Moving reverse
+      door_count[0]++; // Moving reverse
     } else {
       // A rose, B is HIGH
-      d1_count--; // Moving forward
+      door_count[0]--; // Moving forward
     }
   }
 }
@@ -196,15 +94,15 @@ void d2encoderEvent2x()
 {
   if (digitalRead(ENC_D2_B) == 0) {
     if (digitalRead(ENC_D2_A) == 0) {
-      d2_count--;
+      door_count[1]--;
     } else {
-      d2_count++;
+      door_count[1]++;
     }
   } else {
     if (digitalRead(ENC_D2_A) == 0) {
-      d2_count++;
+      door_count[1]++;
     } else {
-      d2_count--;
+      door_count[1]--;
     }
   }
 }
@@ -213,15 +111,15 @@ void d3encoderEvent2x()
 {
   if (digitalRead(ENC_D3_B) == 0) {
     if (digitalRead(ENC_D3_A) == 0) {
-      d3_count--;
+      door_count[2]--;
     } else {
-      d3_count++;
+      door_count[2]++;
     }
   } else {
     if (digitalRead(ENC_D3_A) == 0) {
-      d3_count++;
+      door_count[2]++;
     } else {
-      d3_count--;
+      door_count[2]--;
     }
   }
 }
@@ -230,15 +128,15 @@ void d4encoderEvent2x()
 {
   if (digitalRead(ENC_D4_B) == 0) {
     if (digitalRead(ENC_D4_A) == 0) {
-      d4_count--; 
+      door_count[3]--; 
     } else {
-      d4_count++; 
+      door_count[3]++; 
     }
   } else {
     if (digitalRead(ENC_D4_A) == 0) {
-      d4_count++; 
+      door_count[3]++; 
     } else {
-      d4_count--; 
+      door_count[3]--; 
     }
   }
 }
@@ -247,15 +145,15 @@ void d5encoderEvent2x()
 {
   if (digitalRead(ENC_D5_B) == 0) {
     if (digitalRead(ENC_D5_A) == 0) {
-      d5_count--;
+      door_count[4]--;
     } else {
-      d5_count++;
+      door_count[4]++;
     }
   } else {
     if (digitalRead(ENC_D5_A) == 0) {
-      d5_count++;
+      door_count[4]++;
     } else {
-      d5_count--;
+      door_count[4]--;
     }
   }
 }
@@ -267,7 +165,7 @@ void setup()
   // ROS
   nh.initNode();
   nh.advertiseService(doorServer);
-  nh.advertise(shotUpdate);
+  nh.advertise(shotPub);
 
   // Pins
   pinMode(ENC_D1_A, INPUT);
@@ -281,16 +179,16 @@ void setup()
   pinMode(ENC_D5_A, INPUT);
   pinMode(ENC_D5_B, INPUT);
 
-  pinMode(D1_OPEN, OUTPUT);
-  pinMode(D1_CLOSE, OUTPUT);
-  pinMode(D2_OPEN, OUTPUT);
-  pinMode(D2_CLOSE, OUTPUT);
-  pinMode(D3_OPEN, OUTPUT);
-  pinMode(D3_CLOSE, OUTPUT);
-  pinMode(D4_OPEN, OUTPUT);
-  pinMode(D4_CLOSE, OUTPUT);
-  pinMode(D5_OPEN, OUTPUT);
-  pinMode(D5_CLOSE, OUTPUT);
+  pinMode(door_open[0], OUTPUT);
+  pinMode(door_close[0], OUTPUT);
+  pinMode(door_open[1], OUTPUT);
+  pinMode(door_close[1], OUTPUT);
+  pinMode(door_open[2], OUTPUT);
+  pinMode(door_close[2], OUTPUT);
+  pinMode(door_open[3], OUTPUT);
+  pinMode(door_close[3], OUTPUT);
+  pinMode(door_open[4], OUTPUT);
+  pinMode(door_close[4], OUTPUT);
 
   // Init interrupts
   attachInterrupt(digitalPinToInterrupt(ENC_D1_A), d1encoderEvent2x, CHANGE);
@@ -303,10 +201,13 @@ void setup()
 
 void loop()
 {
-  # example
-  shot_msg.header.stamp = nh.now();
+  // example
+  shot_msg.stamp = nh.now();
   shot_msg.door = 1;
   shot_msg.speed = 100.0;
+  shot_msg.goal = false;
+  shotPub.publish(&shot_msg);
+
 
   nh.spinOnce();
   delay(1000);
