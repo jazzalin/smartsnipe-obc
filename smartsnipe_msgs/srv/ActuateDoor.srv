@@ -1,5 +1,4 @@
-uint8 door
-bool open
+uint8[] doors
 ---
 bool success
 string message

@@ -1,2 +1,0 @@
-int16 shots_taken
-float32 shot_percentage
