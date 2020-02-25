@@ -25,7 +25,7 @@ int door_close[] = {23, 25, 27, 29, 31};
 
 ros::NodeHandle nh;
 // Services
-void doors_cb(const smartsnipe_msgs::ActuateDoor::Request & req, smartsnipe_msgs::ActuateDoor::Response & resp);
+void doors_cb(const smartsnipe_msgs::ActuateDoor::Request & req, smartsnipe_msgs::ActuateDoor::Response & res);
 ros::ServiceServer<smartsnipe_msgs::ActuateDoor::Request, smartsnipe_msgs::ActuateDoor::Response> doorServer("doors", &doors_cb);
 // Topics
 smartsnipe_msgs::Shot shot_msg;
@@ -33,21 +33,22 @@ ros::Publisher shotPub("shot_stats", &shot_msg);
 
 volatile long door_count[5] = {0, 0, 0, 0, 0};
 bool state[] = {0, 0, 0, 0, 0}; // by default, all doors start closed
-//float N = 823.1; // Gear box total pulse per revolution (PPR)
-int N = 800;
+// TODO: update motor tick specs
+int N[] = {400, 400, 400, 800, 800};
 
-void doors_cb(const smartsnipe_msgs::ActuateDoor::Request & req, smartsnipe_msgs::ActuateDoor::Response & resp)
+void doors_cb(const smartsnipe_msgs::ActuateDoor::Request & req, smartsnipe_msgs::ActuateDoor::Response & res)
 {
-  for (int i = 0; i < 5; i++)
+  for (int i = 0; i < 1; i++)
   {
     // Check if door is already in desired state
     if(req.doors[i] != state[i])
     {
+      nh.loginfo("Success");
       door_control(req.doors[i],i);
     }
-    resp.success = true;
-    resp.message = "Door actuated";
   }
+  res.success = true;
+  res.message = "Door actuated";
 }
 
 void door_control(bool open, int i)
@@ -58,12 +59,12 @@ void door_control(bool open, int i)
   if (open)
   {
     digitalWrite(door_open[i], HIGH);
-    // while(abs(door_count[i] - start) < N) {};
+    while(abs(door_count[i] - start) < N[i]) {};
     digitalWrite(door_open[i], LOW);
   } else // close door
   {
     digitalWrite(door_close[i], HIGH);
-    // while(abs(door_count[i] - start) < N) {};
+    while(abs(door_count[i] - start) < N[i]) {};
     digitalWrite(door_close[i], LOW);
   }
   state[i] = !state[i];
@@ -166,6 +167,7 @@ void setup()
   nh.initNode();
   nh.advertiseService(doorServer);
   nh.advertise(shotPub);
+  // Serial.begin(9600); //Testing only
 
   // Pins
   pinMode(ENC_D1_A, INPUT);
@@ -207,8 +209,9 @@ void loop()
   shot_msg.speed = 100.0;
   shot_msg.goal = false;
   shotPub.publish(&shot_msg);
+  // Serial.println(door_count[0]); //Testing only
 
 
   nh.spinOnce();
-  delay(1000);
+  delay(100);
 }
