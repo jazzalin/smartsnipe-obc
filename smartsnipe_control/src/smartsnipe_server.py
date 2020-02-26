@@ -38,9 +38,11 @@ class BoardMonitor:
         self.shot_missed = 0
 
     def set_doors(self, doors=[0, 0, 0, 0, 0]):
-        for index in range(len(doors)):
-            if doors[index]:
-                self.doors.append(Door(index))
+        self.doors = doors
+        # FIXME
+        # for index in range(len(doors)):
+        #     if doors[index]:
+        #         self.doors.append(Door(index))
         
     def actuate_door(self):
         """
@@ -66,7 +68,8 @@ class BoardMonitor:
         """
         Update internal state of targets for analytics
         """
-        rospy.logdebug("shot stat received")
+        pass
+        # rospy.logdebug("shot stat received")
         # self.shot_count += 1
         # if data.goal:
         #     self.doors[data.door].increment_count()
@@ -89,7 +92,7 @@ class SmartsnipeAction(object):
 
         # Control + monitor of shooting board
         self.board = BoardMonitor()
-        self.timeout = rospy.Time(60) # timeout after a minute of inactivity
+        self.timeout = rospy.Time(10).to_sec() # timeout after a minute of inactivity
     
     def stats_change(self):
         """
@@ -99,7 +102,7 @@ class SmartsnipeAction(object):
 
 
     def execute_cb(self, goal):
-        r = rospy.Rate(10)
+        r = rospy.Rate(1)
         success = True
         self.board.reset_state()
 
@@ -116,10 +119,13 @@ class SmartsnipeAction(object):
             self._result.final_state.status = "FAILED: Could not actuate doors"
             self._as.set_aborted(self._result)
         else:
-            start = rospy.Time.now()
+            start = rospy.Time.now().to_sec()
             if goal.drill.duration > 0.0:
                 rospy.logdebug("Starting requested {} second drill".format(goal.drill.duration))
-                while rospy.Time.now() - start < goal.drill.duration:
+                duration = rospy.Duration.from_sec(goal.drill.duration).to_sec()
+                # FIXME
+                for i in range(10):
+                # while rospy.Time.now().to_sec() - start < duration:
                     if self._as.is_preempt_requested():  # handle preemption request;
                         rospy.loginfo("Current drill preempted. Ending current drill")
                         success = False
@@ -131,7 +137,9 @@ class SmartsnipeAction(object):
                     r.sleep()
             else:
                 rospy.logdebug("Starting requested drill")
-                while not self.stats_change() and (rospy.Time.now() - start) < self.timeout:
+                # FIXME
+                for i in range(10):
+                # while not self.stats_change() and (rospy.Time.now().to_sec() - start) < self.timeout:
                     if self._as.is_preempt_requested():  # handle preemption request;
                         rospy.loginfo("Current drill preempted. Ending current drill")
                         success = False
@@ -140,8 +148,8 @@ class SmartsnipeAction(object):
                     self._feedback.current_state.status = "Waiting for shot to be taken..."
                     self._as.publish_feedback(self._feedback)
                     r.sleep()   
-            
-            self.prev_state = self.shot_count
+            rospy.loginfo("DONE")
+            self.prev_state = self.board.shot_count
             # Return results if drill completed successfully    
             if success:
                 self._result.final_state.status = "Useful results"

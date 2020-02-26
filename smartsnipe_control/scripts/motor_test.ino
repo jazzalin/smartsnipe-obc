@@ -31,8 +31,8 @@ ros::ServiceServer<smartsnipe_msgs::ActuateDoor::Request, smartsnipe_msgs::Actua
 smartsnipe_msgs::Shot shot_msg;
 ros::Publisher shotPub("shot_stats", &shot_msg);
 
-volatile long door_count[5] = {0, 0, 0, 0, 0};
-bool state[] = {0, 0, 0, 0, 0}; // by default, all doors start closed
+volatile long door_count[] = {0, 0, 0, 0, 0};
+int state[] = {0, 0, 0, 0, 0}; // by default, all doors start closed
 // TODO: update motor tick specs
 int N[] = {400, 400, 400, 800, 800};
 
@@ -41,17 +41,17 @@ void doors_cb(const smartsnipe_msgs::ActuateDoor::Request & req, smartsnipe_msgs
   for (int i = 0; i < 1; i++)
   {
     // Check if door is already in desired state
-    if(req.doors[i] != state[i])
-    {
-      nh.loginfo("Success");
-      door_control(req.doors[i],i);
-    }
+    // if(req.doors[i] != state[i])
+    // {
+    nh.loginfo("Received");
+    door_control(req.doors[i],i);
+// 
   }
   res.success = true;
   res.message = "Door actuated";
 }
 
-void door_control(bool open, int i)
+void door_control(int open, int i)
 {
   long start = 0;
   start = door_count[i];
@@ -67,7 +67,7 @@ void door_control(bool open, int i)
     while(abs(door_count[i] - start) < N[i]) {};
     digitalWrite(door_close[i], LOW);
   }
-  state[i] = !state[i];
+  state[i] = open;
 }
 
 void d1encoderEvent2x()

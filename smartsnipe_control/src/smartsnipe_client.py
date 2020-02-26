@@ -62,7 +62,7 @@ class SmartsnipeClient:
         rospy.loginfo("Drill is now active")
 
     def drill_feedback_cb(self, feedback):
-        rospy.loginfo(feedback.data)
+        rospy.loginfo(feedback.current_state)
     
     def drill_results_cb(self, status, result):
         rospy.logdebug("Drill results received with status {}; msg: {}".format(status, result))
