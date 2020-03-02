@@ -85,10 +85,10 @@ class SmartsnipeClient:
                     rospy.loginfo("Requesting new board configuration")
                     # Request new drill
                     # Example drill
-                    self.action.drill.time_between = 0.5
-                    self.action.drill.time_open = 1.0
-                    self.action.drill.slots = [1, 1, 1, 1, 1]
-                    self.action.drill.duration = 180.0
+                    self.action.drill.time_between = self.session.time_between
+                    self.action.drill.time_open = self.session.time_open
+                    self.action.drill.slots = self.session.slots
+                    self.action.drill.duration = self.session.duration
                     self.client.send_goal(self.action,
                                           active_cb=self.drill_in_progress_cb,
                                           done_cb=self.drill_results_cb, 

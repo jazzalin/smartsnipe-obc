@@ -37,7 +37,7 @@ class BoardMonitor:
         self.shot_count = 0
         self.shot_missed = 0
 
-    def set_doors(self, doors=[0, 0, 0, 0, 0]):
+    def set_doors(self, doors=[0, 0, 0, 0]):
         self.doors = doors
         # FIXME
         # for index in range(len(doors)):
