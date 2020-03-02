@@ -18,8 +18,10 @@
 #define ENC_D4_B 6
 
 // Door pins
-int door_open[] = {22, 24, 26, 28};
-int door_close[] = {23, 25, 27, 29};
+int door_open[] = {12, 10, 8, 6};
+int door_close[] = {13, 11, 9, 7};
+int limit_open[] = {22, 24, 26, 28};
+int limit_close[] = {23, 25, 27, 29};
 
 ros::NodeHandle nh;
 // Services
@@ -61,18 +63,31 @@ void door_control(int open, int i)
 {
   long start = 0;
   start = door_count[i];
+  bool switch_enabled = false;
   // Open door
   if (open)
   {
-    digitalWrite(door_open[i], HIGH);
-    // while(abs(door_count[i] - start) < N[i]) {};
-    delay(1000);
+    // digitalWrite(door_open[i], HIGH);
+    analogWrite(door_open[i], 127);
+    while(!switch_enabled && abs(door_count[i] - start) < N[i])
+    {
+      if(!switch_enabled && digitalRead(limit_open[i]))
+      {
+        switch_enabled = true;
+      }
+    };
     digitalWrite(door_open[i], LOW);
+    // analogWrite(door_open[i], 127);
   } else // close door
   {
-    digitalWrite(door_close[i], HIGH);
-    // while(abs(door_count[i] - start) < N[i]) {};
-    delay(1000);
+    analogWrite(door_close[i], 127);
+    while(!switch_enabled && abs(door_count[i] - start) < N[i])
+    {
+      // if(!switch_enabled && digitalRead(limit_close[i]))
+      // {
+      //   switch_enabled = true;
+      // }
+    };
     digitalWrite(door_close[i], LOW);
   }
   state[i] = open;
