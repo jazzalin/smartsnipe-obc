@@ -80,14 +80,11 @@ class BoardMonitor:
 class SmartsnipeAction(object):
     _feedback = SmartsnipeDrillFeedback()
     _result = SmartsnipeDrillResult()
-    # _feedback = actionlib_tutorials.msg.FibonacciFeedback()
-    # _result = actionlib_tutorials.msg.FibonacciResult()
 
     def __init__(self, name):
         # ROS
         self._action_name = name
         self._as = actionlib.SimpleActionServer(self._action_name, SmartsnipeDrillAction, execute_cb=self.execute_cb, auto_start=False)
-        # self._as = actionlib.SimpleActionServer(self._action_name, actionlib_tutorials.msg.FibonacciAction, execute_cb=self.execute_cb, auto_start=False)
         self._as.start()
 
         # Control + monitor of shooting board
@@ -123,9 +120,8 @@ class SmartsnipeAction(object):
             if goal.drill.duration > 0.0:
                 rospy.logdebug("Starting requested {} second drill".format(goal.drill.duration))
                 duration = rospy.Duration.from_sec(goal.drill.duration).to_sec()
-                # FIXME
-                for i in range(10):
-                # while rospy.Time.now().to_sec() - start < duration:
+
+                while (rospy.Time.now().to_sec() - start) < duration:
                     if self._as.is_preempt_requested():  # handle preemption request;
                         rospy.loginfo("Current drill preempted. Ending current drill")
                         success = False
@@ -137,9 +133,8 @@ class SmartsnipeAction(object):
                     r.sleep()
             else:
                 rospy.logdebug("Starting requested drill")
-                # FIXME
-                for i in range(10):
-                # while not self.stats_change() and (rospy.Time.now().to_sec() - start) < self.timeout:
+
+                while not self.stats_change() and (rospy.Time.now().to_sec() - start) < self.timeout:
                     if self._as.is_preempt_requested():  # handle preemption request;
                         rospy.loginfo("Current drill preempted. Ending current drill")
                         success = False
