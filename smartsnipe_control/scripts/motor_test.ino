@@ -16,12 +16,10 @@
 #define ENC_D3_B 5
 #define ENC_D4_A 20
 #define ENC_D4_B 6
-#define ENC_D5_A 21
-#define ENC_D5_B 7
 
 // Door pins
-int door_open[] = {22, 24, 26, 28, 30};
-int door_close[] = {23, 25, 27, 29, 31};
+int door_open[] = {22, 24, 26, 28};
+int door_close[] = {23, 25, 27, 29};
 
 ros::NodeHandle nh;
 // Services
@@ -31,21 +29,29 @@ ros::ServiceServer<smartsnipe_msgs::ActuateDoor::Request, smartsnipe_msgs::Actua
 smartsnipe_msgs::Shot shot_msg;
 ros::Publisher shotPub("shot_stats", &shot_msg);
 
-volatile long door_count[] = {0, 0, 0, 0, 0};
-int state[] = {0, 0, 0, 0, 0}; // by default, all doors start closed
+volatile long door_count[] = {0, 0, 0, 0};
+int state[] = {0, 0, 0, 0}; // by default, all doors start closed
 // TODO: update motor tick specs
-int N[] = {400, 400, 400, 800, 800};
+int N[] = {400, 400, 400, 400};
+
+// Radargun
+void radarScan();
+
+int segment[4][7];//LCD segment data stored here
+
+float measuredSpeed = 0.0, oldSpeed = 0.0;//converted data to speed
+int min_val = 1024;
+int max_val = 0;
 
 void doors_cb(const smartsnipe_msgs::ActuateDoor::Request & req, smartsnipe_msgs::ActuateDoor::Response & res)
 {
-  for (int i = 0; i < 1; i++)
+  for (int i = 0; i < 4; i++)
   {
     // Check if door is already in desired state
-    // if(req.doors[i] != state[i])
-    // {
-    nh.loginfo("Received");
-    door_control(req.doors[i],i);
-// 
+    if(req.doors[i] != state[i])
+    {
+      door_control(req.doors[i],i);
+    }
   }
   res.success = true;
   res.message = "Door actuated";
@@ -59,12 +65,14 @@ void door_control(int open, int i)
   if (open)
   {
     digitalWrite(door_open[i], HIGH);
-    while(abs(door_count[i] - start) < N[i]) {};
+    // while(abs(door_count[i] - start) < N[i]) {};
+    delay(1000);
     digitalWrite(door_open[i], LOW);
   } else // close door
   {
     digitalWrite(door_close[i], HIGH);
-    while(abs(door_count[i] - start) < N[i]) {};
+    // while(abs(door_count[i] - start) < N[i]) {};
+    delay(1000);
     digitalWrite(door_close[i], LOW);
   }
   state[i] = open;
@@ -142,22 +150,6 @@ void d4encoderEvent2x()
   }
 }
 
-void d5encoderEvent2x()
-{
-  if (digitalRead(ENC_D5_B) == 0) {
-    if (digitalRead(ENC_D5_A) == 0) {
-      door_count[4]--;
-    } else {
-      door_count[4]++;
-    }
-  } else {
-    if (digitalRead(ENC_D5_A) == 0) {
-      door_count[4]++;
-    } else {
-      door_count[4]--;
-    }
-  }
-}
 
 //##################################################
 
@@ -178,8 +170,6 @@ void setup()
   pinMode(ENC_D3_B, INPUT);
   pinMode(ENC_D4_A, INPUT);
   pinMode(ENC_D4_B, INPUT);
-  pinMode(ENC_D5_A, INPUT);
-  pinMode(ENC_D5_B, INPUT);
 
   pinMode(door_open[0], OUTPUT);
   pinMode(door_close[0], OUTPUT);
@@ -189,29 +179,28 @@ void setup()
   pinMode(door_close[2], OUTPUT);
   pinMode(door_open[3], OUTPUT);
   pinMode(door_close[3], OUTPUT);
-  pinMode(door_open[4], OUTPUT);
-  pinMode(door_close[4], OUTPUT);
 
   // Init interrupts
   attachInterrupt(digitalPinToInterrupt(ENC_D1_A), d1encoderEvent2x, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ENC_D2_A), d2encoderEvent2x, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ENC_D3_A), d3encoderEvent2x, CHANGE);
   attachInterrupt(digitalPinToInterrupt(ENC_D4_A), d4encoderEvent2x, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(ENC_D5_A), d5encoderEvent2x, CHANGE);
   
 }
 
 void loop()
 {
   // example
+  radarScan();
   shot_msg.stamp = nh.now();
-  shot_msg.door = 1;
-  shot_msg.speed = 100.0;
+  // TODO: replace shot_msg.door with door on which shot was made based on detection sensor reading (-1 otherwise)
+  shot_msg.door = -1; 
+  shot_msg.speed = measuredSpeed;
   shot_msg.goal = false;
   shotPub.publish(&shot_msg);
   // Serial.println(door_count[0]); //Testing only
 
 
   nh.spinOnce();
-  delay(100);
+  delay(500);
 }

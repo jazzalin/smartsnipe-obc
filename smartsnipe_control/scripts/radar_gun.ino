@@ -49,43 +49,43 @@ void radarScan(){
 
   //Zero - Ones
   if (segment[3][4] == 1 && segment[3][5] == 1 && segment[2][5] == 1 && segment[2][4] == 0 && segment[1][4] == 1 && segment[1][5] == 1 && segment[0][5] == 1) {
-    measuredSpeed = 0;
+    measuredSpeed = 0.0;
   }
   //One - Ones
   if (segment[3][4] == 0 && segment[3][5] == 0 && segment[2][5] == 1 && segment[2][4] == 0 && segment[1][4] == 0 && segment[1][5] == 1 && segment[0][5] == 0) {
-    measuredSpeed = 1;
+    measuredSpeed = 1.0;
   }
   //Two - Ones
   if (segment[3][4] == 0 && segment[3][5] == 1 && segment[2][5] == 1 && segment[2][4] == 1 && segment[1][4] == 1 && segment[1][5] == 0 && segment[0][5] == 1) {
-    measuredSpeed = 2;
+    measuredSpeed = 2.0;
   }
   //Three - Ones
   if (segment[3][4] == 0 && segment[3][5] == 1 && segment[2][5] == 1 && segment[2][4] == 1 && segment[1][4] == 0 && segment[1][5] == 1 && segment[0][5] == 1) {
-    measuredSpeed = 3;
+    measuredSpeed = 3.0;
   }
   //Four - Ones
   if (segment[3][4] == 1 && segment[3][5] == 0 && segment[2][5] == 1 && segment[2][4] == 1 && segment[1][4] == 0 && segment[1][5] == 1 && segment[0][5] == 0) {
-    measuredSpeed = 4;
+    measuredSpeed = 4.0;
   }
   //Five - Ones
   if (segment[3][4] == 1 && segment[3][5] == 1 && segment[2][5] == 0 && segment[2][4] == 1 && segment[1][4] == 0 && segment[1][5] == 1 && segment[0][5] == 1) {
-    measuredSpeed = 5;
+    measuredSpeed = 5.0;
   }
   //Six - Ones
   if (segment[3][4] == 1 && segment[3][5] == 1 && segment[2][5] == 0 && segment[2][4] == 1 && segment[1][4] == 1 && segment[1][5] == 1 && segment[0][5] == 1) {
-    measuredSpeed = 6;
+    measuredSpeed = 6.0;
   }
   //Seven - Ones
   if (segment[3][4] == 0 && segment[3][5] == 1 && segment[2][5] == 1 && segment[2][4] == 0 && segment[1][4] == 0 && segment[1][5] == 1 && segment[0][5] == 0) {
-    measuredSpeed = 7;
+    measuredSpeed = 7.0;
   }
   //Eight - Ones
   if (segment[3][4] == 1 && segment[3][5] == 1 && segment[2][5] == 1 && segment[2][4] == 1 && segment[1][4] == 1 && segment[1][5] == 1 && segment[0][5] == 1) {
-    measuredSpeed = 8;
+    measuredSpeed = 8.0;
   }
   //Nine - Ones
   if (segment[3][4] == 1 && segment[3][5] == 1 && segment[2][5] == 1 && segment[2][4] == 1 && segment[1][4] == 0 && segment[1][5] == 1 && segment[0][5] == 1) {
-    measuredSpeed = 9;
+    measuredSpeed = 9.0;
   }
 
 
@@ -100,39 +100,39 @@ void radarScan(){
 
   //One - Tens
   if (segment[3][2] == 0 && segment[2][2] == 0 && segment[2][3] == 1 && segment[3][3] == 0 && segment[1][2] == 0 && segment[1][3] == 1 && segment[0][3] == 0) {
-    measuredSpeed = measuredSpeed + (1 * 10);
+    measuredSpeed = measuredSpeed + (1.0 * 10);
   }
   //Two - Tens
   if (segment[3][2] == 0 && segment[2][2] == 1 && segment[2][3] == 1 && segment[3][3] == 1 && segment[1][2] == 1 && segment[1][3] == 0 && segment[0][3] == 1) {
-    measuredSpeed = measuredSpeed + (2 * 10);
+    measuredSpeed = measuredSpeed + (2.0 * 10);
   }
   //Three - Tens
   if (segment[3][2] == 0 && segment[2][2] == 1 && segment[2][3] == 1 && segment[3][3] == 1 && segment[1][2] == 0 && segment[1][3] == 1 && segment[0][3] == 1) {
-    measuredSpeed = measuredSpeed + (3 * 10);
+    measuredSpeed = measuredSpeed + (3.0 * 10);
   }
   //Four - Tens
   if (segment[3][2] == 1 && segment[2][2] == 1 && segment[2][3] == 1 && segment[3][3] == 0 && segment[1][2] == 0 && segment[1][3] == 1 && segment[0][3] == 0) {
-    measuredSpeed = measuredSpeed + (4 * 10);
+    measuredSpeed = measuredSpeed + (4.0 * 10);
   }
   //Five - Tens
   if (segment[3][2] == 1 && segment[2][2] == 1 && segment[2][3] == 0 && segment[3][3] == 1 && segment[1][2] == 0 && segment[1][3] == 1 && segment[0][3] == 1) {
-    measuredSpeed = measuredSpeed + (5 * 10);
+    measuredSpeed = measuredSpeed + (5.0 * 10);
   }
   //Six - Tens
   if (segment[3][2] == 1 && segment[2][2] == 1 && segment[2][3] == 0 && segment[3][3] == 1 && segment[1][2] == 1 && segment[1][3] == 1 && segment[0][3] == 1) {
-    measuredSpeed = measuredSpeed + (6 * 10);
+    measuredSpeed = measuredSpeed + (6.0 * 10);
   }
   //Seven - Tens
   if (segment[3][2] == 0 && segment[2][2] == 0 && segment[2][3] == 1 && segment[3][3] == 1 && segment[1][2] == 0 && segment[1][3] == 1 && segment[0][3] == 0) {
-    measuredSpeed = measuredSpeed + (7 * 10);
+    measuredSpeed = measuredSpeed + (7.0 * 10);
   }
   //Eight - Tens
   if (segment[3][2] == 1 && segment[2][2] == 1 && segment[2][3] == 1 && segment[3][3] == 1 && segment[1][2] == 1 && segment[1][3] == 1 && segment[0][3] == 1) {
-    measuredSpeed = measuredSpeed + (8 * 10);
+    measuredSpeed = measuredSpeed + (8.0 * 10);
   }
   //Nine - Tens
   if (segment[3][2] == 1 && segment[2][2] == 1 && segment[2][3] == 1 && segment[3][3] == 1 && segment[1][2] == 0 && segment[1][3] == 1 && segment[0][3] == 1) {
-    measuredSpeed = measuredSpeed + (9 * 10);
+    measuredSpeed = measuredSpeed + (9.0 * 10);
   }
 
   /*
@@ -145,16 +145,16 @@ void radarScan(){
   //     0,1
   //One - Hundreds
   if (segment[3][1] == 0 && segment[3][0] == 0 && segment[2][1] == 1 && segment[2][0] == 0 && segment[1][0] == 0 && segment[1][1] == 1 && segment[0][1] == 0) {
-    measuredSpeed = measuredSpeed + (1 * 100);
+    measuredSpeed = measuredSpeed + (1.0 * 100);
   }
   if (segment[3][1] == 1 && segment[3][0] == 0 && segment[2][1] == 1 && segment[2][0] == 1 && segment[1][0] == 1 && segment[1][1] == 0 && segment[0][1] == 1) {
-    measuredSpeed = measuredSpeed + (2 * 100);
+    measuredSpeed = measuredSpeed + (2.0 * 100);
   }
 
 
 
   if (oldSpeed != measuredSpeed) {//ony print speed if it's new
-    nh.loginfo(measuredSpeed);
+    nh.logdebug(String(measuredSpeed).c_str());
   }
   oldSpeed = measuredSpeed;
 
