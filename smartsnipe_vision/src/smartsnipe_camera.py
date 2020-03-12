@@ -1,6 +1,8 @@
 # Smartsnipe Camera object (Microsoft Kinectv1)
-# Drivers: libfreenect + OpenNI
+# Drivers: libfreenect (+ OpenNI)
 import cv2
+import freenect
+import numpy as np
 import sys
 
 
@@ -43,6 +45,11 @@ class Camera(object):
                     sys.exit('Reads the next frame failed')
                 if gray:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                # TODO: incorporate depth using libfreenect
+                # frame, ret = freenect.sync_get_video()
+                # frame = cv2.cvtColor(array, cv2.COLOR_RGB2BGR)
+                # depth, ret = freenect.sync_get_depth()
+                # depth = depth.astype(np.uint8)
                 if callback:
                     callback(frame, self.fps)
 
@@ -72,6 +79,6 @@ if __name__ == '__main__':
             cam.get(cv2.CAP_PROP_FRAME_WIDTH),
             cam.get(cv2.CAP_PROP_FRAME_HEIGHT),
             cam.get(cv2.CAP_PROP_FPS)))
-        cam.capture(callback)
+        cam.capture(callback, gray=False)
 
     cv2.destroyAllWindows()
