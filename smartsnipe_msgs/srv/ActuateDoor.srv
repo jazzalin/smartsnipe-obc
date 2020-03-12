@@ -1,4 +1,5 @@
 uint8[] doors
+bool reset
 ---
 bool success
 string message

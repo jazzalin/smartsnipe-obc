@@ -37,8 +37,9 @@ class BoardMonitor:
         self.shot_count = 0
         self.shot_missed = 0
 
-    def set_doors(self, doors=[0, 0, 0, 0]):
+    def set_doors(self, doors=[0, 0, 0, 0], reset=True):
         self.doors = doors
+        self.reset = reset
         # FIXME
         # for index in range(len(doors)):
         #     if doors[index]:
@@ -52,7 +53,7 @@ class BoardMonitor:
         try:
             rospy.wait_for_service('doors', timeout=5.0)
             actuator = rospy.ServiceProxy('doors', ActuateDoor)
-            req = ActuateDoorRequest(doors=self.doors)
+            req = ActuateDoorRequest(doors=self.doors, reset=self.reset)
             resp = actuator(req)
             rospy.loginfo(resp.message)
         except rospy.ServiceException as e:
@@ -103,23 +104,35 @@ class SmartsnipeAction(object):
         success = True
         self.board.reset_state()
 
-        rospy.loginfo("{}: Received new drill".format(self._action_name))
+        rospy.loginfo("{}: Received new request".format(self._action_name))
         
         # TODO: -call door service to apply request board configuration
         #       -if duration is specified, enter time loop | catch any preemption (and return existing stats) |
         #        use feedback to update stats | use return to give final stats
         #       -if duration is not specified, catch any preemption (necessary???) | return current stats
-
-        self.board.set_doors(goal.drill.slots)
+        if goal.drill.duration < 0.0:
+            self.board.set_doors(doors=goal.drill.slots, reset=True)
+        else:
+            self.board.set_doors(doors=goal.drill.slots, reset=False)
+        
+        # Arduino passes command to 4 motors
         ready = self.board.actuate_door()
+
         if not ready:
+            rospy.loginfo("FAILED: Could not actuate doors")
             self._result.final_state.status = "FAILED: Could not actuate doors"
             self._as.set_aborted(self._result)
+        elif goal.drill.duration < 0.0:
+            self._result.final_state.status = "SUCCESS: Board reset"
+            self._as.set_succeeded(self._result)
         else:
             start = rospy.Time.now().to_sec()
-            if goal.drill.duration > 0.0:
-                rospy.logdebug("Starting requested {} second drill".format(goal.drill.duration))
-                duration = rospy.Duration.from_sec(goal.drill.duration).to_sec()
+            # if goal.drill.duration > 0.0:
+            if goal.drill.time_open > 0.0:
+                # rospy.logdebug("Starting requested {} second drill".format(goal.drill.duration))
+                rospy.logdebug("Starting requested {} second drill".format(goal.drill.time_open))
+                # duration = rospy.Duration.from_sec(goal.drill.duration).to_sec()
+                duration = rospy.Duration.from_sec(goal.drill.time_open).to_sec()
 
                 while (rospy.Time.now().to_sec() - start) < duration:
                     if self._as.is_preempt_requested():  # handle preemption request;

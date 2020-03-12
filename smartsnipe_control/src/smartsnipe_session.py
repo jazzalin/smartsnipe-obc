@@ -31,6 +31,7 @@ class Session:
         self.in_progress = False
         self.override = False
         self.requested = False
+        self.reset = False
         self.mode = "default"
         
         # Params
@@ -57,7 +58,6 @@ class Session:
         self.time_between = data["time_between_openings"]
         self.time_open = data["time_slot_is_open"]
         self.slots = data["slots"]
-        # self.mode = data["current_mode"]
         self.requested = True
     
     def set_override(self, data):

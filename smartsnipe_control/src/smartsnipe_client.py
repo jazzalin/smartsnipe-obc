@@ -37,6 +37,7 @@ class SmartsnipeClient:
         if "session_in_progress" in data.keys():
             rospy.loginfo("INIT: initializing session")
             self.session.set_status(data["session_in_progress"])
+            # FIXME Remove following line
             resp["success"] = True
         elif "time_between_openings" in data.keys():
             if not self.session.in_progress:
@@ -58,8 +59,12 @@ class SmartsnipeClient:
         # ACK/NACK
         self.pub.publish(json.dumps(resp))
     
+    def drill_ready_cb(self, status, result):
+        rospy.loginfo("Board status: {}; msg: {}".format(status, result))
+        self.session.reset = True
+    
     def drill_in_progress_cb(self):
-        rospy.loginfo("Drill is now active")
+        rospy.loginfo("Session is now active")
 
     def drill_feedback_cb(self, feedback):
         rospy.loginfo(feedback.current_state)
@@ -81,7 +86,12 @@ class SmartsnipeClient:
         while not rospy.is_shutdown():
             if self.session.in_progress:
                 rospy.loginfo("Session in progress")
-                if self.session.requested:
+                # Reset the board state
+                if not self.session.reset:
+                    self.action.drill.duration = -1.0
+                    self.client.send_goal(self.action, done_cb=self.drill_ready_cb)
+                    self.session.reset = True
+                if self.session.requested and self.session.reset:
                     rospy.loginfo("Requesting new board configuration")
                     # Request new drill
                     # Example drill
