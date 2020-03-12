@@ -1,0 +1,14 @@
+<launch>
+    <arg name="human_pose" default="$(find smartsnipe_vision)/config/human_pose.json" />
+    <arg name="model_weights" default="$(find smartsnipe_vision)/config/resnet18_baseline_att_224x224_A_epoch_249.pth" />
+    <arg name="optimized_model" default="$(find smartsnipe_vision)/config/resnet18_baseline_att_224x224_A_epoch_249_trt.pth" />
+    <arg name="width" default=224 />
+    <arg name="height" default=224 />
+    <node name="smartsnipe_vision" pkg="smartsnipe_vision" type="smartsnipe_vision.py" output="screen"/>
+        <param name="human_pose" value="$(arg human_pose)" />
+        <param name="model_weights" value="$(arg model_weights)" />
+        <param name="optimized_model" value="$(arg optimized_model)" />
+        <param name="width" value="$(arg width)" />
+        <param name="height" value="$(arg height)" />
+    </node>
+</launch>
