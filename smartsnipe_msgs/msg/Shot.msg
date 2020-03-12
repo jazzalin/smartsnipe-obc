@@ -1,4 +1,4 @@
 time stamp
-int8 door
+uint8[] door
 bool goal
 float32 speed
